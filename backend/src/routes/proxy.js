@@ -18,7 +18,7 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
     return res.status(404).json({ error: 'Server not found' });
   }
 
-  const baseUrl = `http:
+  const baseUrl = `http://${server.host}:${server.api_port}`;
   const url = `${baseUrl}/${targetPath}`;
 
   console.log(`--- PROXY DEBUG: ${req.method} ${url} ---`);
