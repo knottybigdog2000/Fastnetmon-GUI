@@ -1,22 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Save, RefreshCw, Search, HardDrive } from 'lucide-react';
-
-interface Server {
-  id: number;
-  name: string;
-}
+import { Server } from '@/types/fnm';
 
 const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedServerId, setSelectedServerId] = useState<string>('');
-  const [originalSettings, setOriginalSettings] = useState<any>(null);
-  const [editState, setEditState] = useState<any>({});
+  const [originalSettings, setOriginalSettings] = useState<Record<string, any> | null>(null);
+  const [editState, setEditState] = useState<Record<string, any>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('Mitigation / Ban');
   const [isSaving, setIsSaving] = useState(false);
@@ -62,7 +59,7 @@ const SettingsPage: React.FC = () => {
     );
 
     if (changedKeys.length === 0) {
-      alert("No changes detected.");
+      toast.info("No changes detected.");
       return;
     }
 
@@ -107,19 +104,21 @@ const SettingsPage: React.FC = () => {
 
     setIsSaving(false);
     if (failCount === 0) {
-      alert(`Successfully updated ${successCount} settings.`);
+      toast.success(`Successfully updated ${successCount} settings.`);
       queryClient.invalidateQueries({ queryKey: ['settings', selectedServerId] });
     } else {
-      alert(`Updated ${successCount} settings, but ${failCount} failed.\nLast error: ${lastError}`);
+      toast.error(`Updated ${successCount} settings, but ${failCount} failed.`, {
+        description: `Last error: ${lastError}`
+      });
     }
   };
 
   const handleToggleChange = (key: string, checked: boolean) => {
-    setEditState((prev: any) => ({ ...prev, [key]: checked }));
+    setEditState((prev: Record<string, any>) => ({ ...prev, [key]: checked }));
   };
 
   const handleInputChange = (key: string, value: string | number | string[]) => {
-    setEditState((prev: any) => ({ ...prev, [key]: value }));
+    setEditState((prev: Record<string, any>) => ({ ...prev, [key]: value }));
   };
 
   
@@ -161,9 +160,9 @@ const SettingsPage: React.FC = () => {
   if (!servers || servers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center p-4">
-        <HardDrive className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-800">No Servers Connected</h2>
-        <p className="text-slate-500 mt-2 max-w-md">Please add a FastNetMon server in the Servers tab to manage its settings.</p>
+        <HardDrive className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200">No Servers Connected</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-md">Please add a FastNetMon server in the Servers tab to manage its settings.</p>
       </div>
     );
   }
@@ -180,10 +179,10 @@ const SettingsPage: React.FC = () => {
 
     if (typeofVal === 'boolean') {
       return (
-        <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 last:border-0 gap-4 hover:bg-slate-50 px-4 rounded transition-colors">
+        <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 rounded transition-colors">
           <div className="flex-1">
-            <Label className="text-slate-800 font-semibold cursor-pointer text-sm" htmlFor={`switch-${key}`}>{key}</Label>
-            <p className="text-xs text-slate-500 mt-0.5">Enable or disable {key.replace(/_/g, ' ')}</p>
+            <Label className="text-slate-800 dark:text-slate-200 font-semibold cursor-pointer text-sm" htmlFor={`switch-${key}`}>{key}</Label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enable or disable {key.replace(/_/g, ' ')}</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer shrink-0">
             <input 
@@ -193,7 +192,7 @@ const SettingsPage: React.FC = () => {
               checked={!!val} 
               onChange={(e) => handleToggleChange(key, e.target.checked)} 
             />
-            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
           </label>
         </div>
       );
@@ -201,16 +200,16 @@ const SettingsPage: React.FC = () => {
 
     if (typeofVal === 'number') {
       return (
-        <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 last:border-0 gap-4 hover:bg-slate-50 px-4 rounded transition-colors">
+        <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 rounded transition-colors">
           <div className="flex-1">
-            <Label className="text-slate-800 font-semibold text-sm">{key}</Label>
-            <p className="text-xs text-slate-500 mt-0.5">Numeric value for {key.replace(/_/g, ' ')}</p>
+            <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">{key}</Label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Numeric value for {key.replace(/_/g, ' ')}</p>
           </div>
           <Input 
             type="number" 
             value={val ?? 0} 
             onChange={(e) => handleInputChange(key, parseInt(e.target.value) || 0)} 
-            className="w-full sm:w-64 bg-white border-slate-200 focus:ring-indigo-500"
+            className="w-full sm:w-64 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-indigo-500"
             autoComplete="off"
             data-lpignore="true"
           />
@@ -220,13 +219,13 @@ const SettingsPage: React.FC = () => {
 
     if (Array.isArray(val)) {
       return (
-        <div key={key} className="flex flex-col py-4 border-b border-slate-100 last:border-0 gap-3 hover:bg-slate-50 px-4 rounded transition-colors">
+        <div key={key} className="flex flex-col py-4 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 rounded transition-colors">
           <div>
-            <Label className="text-slate-800 font-semibold text-sm">{key}</Label>
-            <p className="text-xs text-slate-500 mt-0.5">Comma separated list of items.</p>
+            <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">{key}</Label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comma separated list of items.</p>
           </div>
           <textarea 
-            className="flex min-h-[100px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-[100px] w-full rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-200"
             value={val.join(',\n')} 
             onChange={(e) => handleInputChange(key, e.target.value.split(',').map(s => s.trim()))} 
             placeholder="Item1, Item2, Item3..."
@@ -241,17 +240,17 @@ const SettingsPage: React.FC = () => {
     const safeKeyStr = String(key || '');
     const isSecret = safeKeyStr.includes('password') || safeKeyStr.includes('token');
     return (
-      <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 last:border-0 gap-4 hover:bg-slate-50 px-4 rounded transition-colors">
+      <div key={key} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-slate-100 dark:border-slate-800 last:border-0 gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-4 rounded transition-colors">
         <div className="flex-1">
-          <Label className="text-slate-800 font-semibold text-sm">{key}</Label>
-          <p className="text-xs text-slate-500 mt-0.5">Text string configuration.</p>
+          <Label className="text-slate-800 dark:text-slate-200 font-semibold text-sm">{key}</Label>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Text string configuration.</p>
         </div>
         <Input 
           type={isSecret ? "password" : "text"} 
           value={val !== null && val !== undefined ? String(val) : ''} 
           onChange={(e) => handleInputChange(key, e.target.value)} 
           placeholder={isSecret ? '********' : 'Not set'}
-          className="w-full sm:w-[400px] bg-white border-slate-200 focus:ring-indigo-500"
+          className="w-full sm:w-[400px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-indigo-500"
           autoComplete="new-password"
           data-lpignore="true"
         />
@@ -262,10 +261,10 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 max-w-6xl mx-auto">
       {}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-0 z-10">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-10">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Advanced Settings</h1>
-          <p className="text-slate-500 mt-1">Full configuration access for {servers.find(s => s.id.toString() === selectedServerId)?.name}</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Advanced Settings</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Full configuration access for {servers.find(s => s.id.toString() === selectedServerId)?.name}</p>
         </div>
         
         <div className="flex flex-wrap gap-3 items-center w-full lg:w-auto">
@@ -280,7 +279,7 @@ const SettingsPage: React.FC = () => {
             />
           </div>
           <select 
-            className="flex h-9 w-full sm:w-[200px] items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex h-9 w-full sm:w-[200px] items-center justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
             value={selectedServerId} 
             onChange={(e) => setSelectedServerId(e.target.value)}
           >
@@ -318,8 +317,8 @@ const SettingsPage: React.FC = () => {
                     onClick={() => setActiveTab(group)}
                     className={`text-left px-4 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                       isActive 
-                        ? 'bg-indigo-50 text-indigo-700 border-l-4 border-indigo-600' 
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent'
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300 border-l-4 border-indigo-600' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-200 border-l-4 border-transparent'
                     }`}
                   >
                     {group}
@@ -340,20 +339,20 @@ const SettingsPage: React.FC = () => {
               const hasMatches = keys.some(k => k && k.toLowerCase().includes(searchTerm.toLowerCase()));
               if (searchTerm && !hasMatches) {
                 return (
-                  <div key={group} className="text-center py-12 text-slate-500 bg-white rounded-xl border border-slate-200">
+                  <div key={group} className="text-center py-12 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                     No matching settings found in {group}.
                   </div>
                 );
               }
 
               return (
-                <Card key={group} className="border-slate-200 shadow-sm overflow-hidden">
-                  <CardHeader className="bg-slate-50/80 border-b border-slate-100 py-5">
-                    <CardTitle className="text-xl text-slate-900">{group}</CardTitle>
+                <Card key={group} className="border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                  <CardHeader className="bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 py-5">
+                    <CardTitle className="text-xl text-slate-900 dark:text-slate-100">{group}</CardTitle>
                     <CardDescription>Manage {keys.length} configuration parameters.</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
                       {keys.map(key => renderField(key))}
                     </div>
                   </CardContent>
@@ -363,7 +362,7 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl border border-slate-200 border-dashed max-w-2xl mx-auto">
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 border-dashed max-w-2xl mx-auto">
           Failed to load settings. Ensure the server API is reachable.
         </div>
       )}

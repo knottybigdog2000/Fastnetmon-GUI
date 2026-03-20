@@ -2,26 +2,40 @@ services:
   backend:
     build:
       context: ./backend
+    container_name: fnm-gui-backend
+    restart: always
     ports:
       - "5000:5000"
     volumes:
       - backend_data:/app/data
+    env_file:
+      - .env
     environment:
       - PORT=5000
       - DB_PATH=/app/data/data.db
-      # Add other env vars as needed
-    restart: always
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:8080}
+    networks:
+      - fnm-network
 
   frontend:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:5000/api
+        - VITE_API_URL=/api
+    container_name: fnm-gui-frontend
+    restart: always
     ports:
       - "8080:80"
     depends_on:
       - backend
-    restart: always
+    networks:
+      - fnm-network
 
 volumes:
   backend_data:
+
+networks:
+  fnm-network:
+    driver: bridge

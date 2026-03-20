@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,20 +17,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Edit2, CheckCircle2, XCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  api_port: number;
-  api_login: string;
-  is_active: number;
-}
+import { Server } from '@/types/fnm';
 
 const ServersPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Server | null>(null);
 
   
   const [formData, setFormData] = useState({
@@ -52,16 +46,33 @@ const ServersPage: React.FC = () => {
     mutationFn: (newServer: any) => api.post('/servers', newServer),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
-      setIsAddOpen(false);
+      setIsDialogOpen(false);
       resetForm();
+      toast.success("Server added successfully.");
     },
+    onError: (err: any) => toast.error(`Failed to add server: ${err.message}`)
+  });
+
+  const editMutation = useMutation({
+    mutationFn: (data: { id: number; payload: any }) =>
+      api.put(`/servers/${data.id}`, data.payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+      setIsDialogOpen(false);
+      setEditingServer(null);
+      resetForm();
+      toast.success("Server updated successfully.");
+    },
+    onError: (err: any) => toast.error(`Failed to update server: ${err.message}`)
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/servers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
+      toast.success("Server deleted.");
     },
+    onError: (err: any) => toast.error(`Failed to delete server: ${err.message}`)
   });
 
   const resetForm = () => {
@@ -76,28 +87,55 @@ const ServersPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addMutation.mutate(formData);
+    if (editingServer) {
+      editMutation.mutate({ id: editingServer.id, payload: formData });
+    } else {
+      addMutation.mutate(formData);
+    }
   };
 
-  if (isLoading) return <div>Loading servers...</div>;
+  const handleEditOpen = (server: Server) => {
+    setEditingServer(server);
+    setFormData({
+      name: server.name,
+      host: server.host,
+      api_port: server.api_port,
+      api_login: server.api_login,
+      api_password: '', 
+    });
+    setIsDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete.id);
+      setPendingDelete(null);
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Loading servers...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">FNM Instances</h1>
-          <p className="text-slate-500">Manage your FastNetMon Advanced servers</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">FNM Instances</h1>
+          <p className="text-slate-500 dark:text-slate-400">Manage your FastNetMon Advanced servers</p>
         </div>
         <Button 
           className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
-          onClick={() => setIsAddOpen(true)}
+          onClick={() => {
+            setEditingServer(null);
+            resetForm();
+            setIsDialogOpen(true);
+          }}
         >
           <Plus className="w-4 h-4" /> Add Server
         </Button>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New FNM Instance</DialogTitle>
+              <DialogTitle>{editingServer ? 'Edit FNM Instance' : 'Add New FNM Instance'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -144,18 +182,18 @@ const ServersPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">API Password</Label>
+                <Label htmlFor="password">API Password {editingServer && '(Leave blank to keep current)'}</Label>
                 <Input 
                   id="password" 
                   type="password" 
                   value={formData.api_password}
                   onChange={(e) => setFormData({...formData, api_password: e.target.value})}
-                  required 
+                  required={!editingServer} 
                 />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={addMutation.isPending}>
-                  {addMutation.isPending ? 'Saving...' : 'Save Instance'}
+                <Button type="submit" disabled={addMutation.isPending || editMutation.isPending}>
+                  {addMutation.isPending || editMutation.isPending ? 'Saving...' : 'Save Instance'}
                 </Button>
               </DialogFooter>
             </form>
@@ -179,7 +217,7 @@ const ServersPage: React.FC = () => {
             <TableBody>
               {servers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     No servers added yet.
                   </TableCell>
                 </TableRow>
@@ -188,11 +226,11 @@ const ServersPage: React.FC = () => {
                   <TableRow key={server.id}>
                     <TableCell>
                       {server.is_active ? (
-                        <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200 gap-1">
+                        <Badge variant="outline" className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/30 gap-1">
                           <CheckCircle2 className="w-3 h-3" /> Active
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-red-600 bg-red-50 border-red-200 gap-1">
+                        <Badge variant="outline" className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/30 gap-1">
                           <XCircle className="w-3 h-3" /> Inactive
                         </Badge>
                       )}
@@ -202,14 +240,14 @@ const ServersPage: React.FC = () => {
                     <TableCell>{server.api_port}</TableCell>
                     <TableCell>{server.api_login}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" className="text-slate-500 hover:text-indigo-600">
+                      <Button variant="ghost" size="icon" className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400" onClick={() => handleEditOpen(server)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="text-slate-500 hover:text-red-600"
-                        onClick={() => deleteMutation.mutate(server.id)}
+                        className="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
+                        onClick={() => setPendingDelete(server)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -221,6 +259,30 @@ const ServersPage: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!pendingDelete} onOpenChange={() => setPendingDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-700 dark:text-red-400">Confirm Server Deletion</DialogTitle>
+          </DialogHeader>
+          <p className="text-slate-600 dark:text-slate-300 py-4">
+            Are you sure you want to remove the server <span className="font-bold">"{pendingDelete?.name}"</span> ({pendingDelete?.host})?
+            This will stop the GUI from monitoring this instance.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Yes, Remove Server'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

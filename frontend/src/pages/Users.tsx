@@ -2,12 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from '@/components/ui/dialog';
 import { Users, Trash2, UserPlus, Shield } from 'lucide-react';
 
 interface User {
@@ -22,6 +30,7 @@ const UsersPage: React.FC = () => {
   
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; username: string } | null>(null);
 
   
   const { data: users, isLoading } = useQuery({
@@ -41,10 +50,10 @@ const UsersPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setNewUsername('');
       setNewPassword('');
-      alert("User created successfully.");
+      toast.success("User created successfully.");
     },
     onError: (err: any) => {
-      alert(`Failed to create user: ${err.response?.data?.error || err.message}`);
+      toast.error(`Failed to create user: ${err.response?.data?.error || err.message}`);
     }
   });
 
@@ -55,9 +64,10 @@ const UsersPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success("User deleted successfully.");
     },
     onError: (err: any) => {
-      alert(`Failed to delete user: ${err.response?.data?.error || err.message}`);
+      toast.error(`Failed to delete user: ${err.response?.data?.error || err.message}`);
     }
   });
 
@@ -68,28 +78,30 @@ const UsersPage: React.FC = () => {
   };
 
   const handleDeleteUser = (id: number, username: string) => {
-    if (confirm(`Are you sure you want to delete user "${username}"?`)) {
-      deleteMutation.mutate(id);
+    setPendingDelete({ id, username });
+  };
+
+  const confirmDelete = () => {
+    if (pendingDelete) {
+      deleteMutation.mutate(pendingDelete.id);
+      setPendingDelete(null);
     }
   };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">User Management</h1>
-          <p className="text-slate-500 mt-1">Manage GUI access and administrators</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">User Management</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage GUI access and administrators</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {}
         <div className="lg:col-span-1 space-y-6">
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="bg-indigo-50/50 border-b border-indigo-100 py-5">
-              <CardTitle className="text-indigo-900 flex items-center gap-2 text-lg">
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardHeader className="bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-indigo-100 dark:border-indigo-900/30 py-5">
+              <CardTitle className="text-indigo-900 dark:text-indigo-100 flex items-center gap-2 text-lg">
                 <UserPlus className="w-5 h-5" /> Add New User
               </CardTitle>
             </CardHeader>
@@ -104,6 +116,7 @@ const UsersPage: React.FC = () => {
                     onChange={(e) => setNewUsername(e.target.value)}
                     autoComplete="off"
                     data-lpignore="true"
+                    className="dark:bg-slate-900 dark:border-slate-800"
                   />
                 </div>
                 <div className="space-y-2">
@@ -116,6 +129,7 @@ const UsersPage: React.FC = () => {
                     onChange={(e) => setNewPassword(e.target.value)}
                     autoComplete="new-password"
                     data-lpignore="true"
+                    className="dark:bg-slate-900 dark:border-slate-800"
                   />
                 </div>
                 <Button 
@@ -130,10 +144,9 @@ const UsersPage: React.FC = () => {
           </Card>
         </div>
 
-        {}
         <div className="lg:col-span-2">
-          <Card className="border-slate-200 shadow-sm h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 py-4 bg-white">
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm h-full flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 dark:border-slate-800 py-4 bg-white dark:bg-slate-900">
               <div>
                 <CardTitle>System Users</CardTitle>
                 <CardDescription>Accounts authorized to access the FNM GUI</CardDescription>
@@ -141,7 +154,7 @@ const UsersPage: React.FC = () => {
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-auto">
               <Table>
-                <TableHeader className="bg-slate-50 sticky top-0">
+                <TableHeader className="bg-slate-50 dark:bg-slate-950 sticky top-0">
                   <TableRow>
                     <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
@@ -151,21 +164,21 @@ const UsersPage: React.FC = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-12 text-slate-500">
+                      <TableCell colSpan={3} className="text-center py-12 text-slate-500 dark:text-slate-400">
                         Loading users...
                       </TableCell>
                     </TableRow>
                   ) : !users || users.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-12 text-slate-500">
+                      <TableCell colSpan={3} className="text-center py-12 text-slate-500 dark:text-slate-400">
                         No users found.
                       </TableCell>
                     </TableRow>
                   ) : (
                     users.map((u) => (
                       <TableRow key={u.id}>
-                        <TableCell className="font-medium text-slate-900 flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold uppercase text-xs">
+                        <TableCell className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold uppercase text-xs">
                             {u.username[0]}
                           </div>
                           {u.username}
@@ -174,7 +187,7 @@ const UsersPage: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className="flex items-center gap-1.5 text-sm text-slate-600">
+                          <span className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
                             <Shield className="w-3.5 h-3.5" />
                             <span className="capitalize">{u.role || 'Admin'}</span>
                           </span>
@@ -185,7 +198,7 @@ const UsersPage: React.FC = () => {
                             size="icon"
                             onClick={() => handleDeleteUser(u.id, u.username)}
                             disabled={deleteMutation.isPending || currentUser?.id === u.id}
-                            className={currentUser?.id === u.id ? 'opacity-30' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}
+                            className={currentUser?.id === u.id ? 'opacity-30' : 'text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'}
                             title={currentUser?.id === u.id ? "Cannot delete your own account" : "Delete user"}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -200,6 +213,31 @@ const UsersPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={!!pendingDelete} onOpenChange={() => setPendingDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-700 dark:text-red-400">Confirm User Deletion</DialogTitle>
+          </DialogHeader>
+          <p className="text-slate-600 dark:text-slate-400 py-4">
+            Are you sure you want to delete the user account for{' '}
+            <span className="font-bold">"{pendingDelete?.username}"</span>?
+            This action cannot be undone.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPendingDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Yes, Delete User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

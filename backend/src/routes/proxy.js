@@ -3,6 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
+const { decrypt } = require('../lib/encrypt');
 
 router.use(authMiddleware);
 
@@ -34,7 +35,7 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
       data: req.body,
       auth: {
         username: server.api_login,
-        password: server.api_password
+        password: decrypt(server.api_password)
       },
       timeout: 5000
     });
