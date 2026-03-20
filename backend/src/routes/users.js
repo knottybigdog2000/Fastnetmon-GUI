@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
-// Get all users (excluding passwords)
+
 router.get('/', (req, res) => {
   try {
     const users = db.prepare('SELECT id, username, role FROM users').all();
@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
   }
 });
 
-// Create a new user
+
 router.post('/', (req, res) => {
   const { username, password, role } = req.body;
   if (!username || !password) {
@@ -25,7 +25,7 @@ router.post('/', (req, res) => {
     const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(
       username,
       hashedPassword,
-      role || 'admin' // defaulting to admin if not specified
+      role || 'admin' 
     );
     
     res.json({ id: result.lastInsertRowid, username, role: role || 'admin' });
@@ -37,11 +37,11 @@ router.post('/', (req, res) => {
   }
 });
 
-// Delete a user
+
 router.delete('/:id', (req, res) => {
   const id = req.params.id;
   
-  // Prevent deleting the currently logged in user
+  
   if (parseInt(id) === req.user.id) {
     return res.status(400).json({ error: 'Cannot delete your own account' });
   }

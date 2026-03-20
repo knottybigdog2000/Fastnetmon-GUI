@@ -21,7 +21,7 @@ const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Mitigation / Ban');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch servers for the dropdown
+  
   const { data: servers } = useQuery({
     queryKey: ['servers'],
     queryFn: async () => {
@@ -30,14 +30,14 @@ const SettingsPage: React.FC = () => {
     },
   });
 
-  // Set initial selected server
+  
   React.useEffect(() => {
     if (servers && servers.length > 0 && !selectedServerId) {
       setSelectedServerId(servers[0].id.toString());
     }
   }, [servers, selectedServerId]);
 
-  // Fetch Main Settings for the selected server
+  
   const { data: settings, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['settings', selectedServerId],
     queryFn: async () => {
@@ -56,7 +56,7 @@ const SettingsPage: React.FC = () => {
   const handleSave = async () => {
     if (!originalSettings || !selectedServerId) return;
 
-    // Find changed keys
+    
     const changedKeys = Object.keys(editState).filter(
       key => JSON.stringify(editState[key]) !== JSON.stringify(originalSettings[key])
     );
@@ -75,17 +75,17 @@ const SettingsPage: React.FC = () => {
       try {
         let val = editState[key];
         
-        // FastNetMon path-based API uses enable/disable for booleans
+        
         if (typeof val === 'boolean') {
           val = val ? 'enable' : 'disable';
         }
         
-        // If it's an array, join it (though usually settings are single values or handled differently)
+        
         if (Array.isArray(val)) {
           val = val.join(',');
         }
 
-        // Format: /proxy/:id/main/:option/:value
+        
         await api.put(`/proxy/${selectedServerId}/main/${key}/${encodeURIComponent(String(val))}`);
         successCount++;
       } catch (err: any) {
@@ -95,7 +95,7 @@ const SettingsPage: React.FC = () => {
       }
     }
 
-    // MANDATORY: Commit changes for FastNetMon Advanced
+    
     if (successCount > 0) {
       try {
         await api.put(`/proxy/${selectedServerId}/commit`);
@@ -122,7 +122,7 @@ const SettingsPage: React.FC = () => {
     setEditState((prev: any) => ({ ...prev, [key]: value }));
   };
 
-  // Group Settings logically
+  
   const settingGroups = useMemo(() => {
     if (!settings) return {};
 
@@ -173,7 +173,7 @@ const SettingsPage: React.FC = () => {
     const val = editState[key];
     const typeofVal = typeof val;
 
-    // Filter by search term safely
+    
     if (searchTerm && key && !key.toLowerCase().includes(searchTerm.toLowerCase())) {
       return null;
     }
@@ -237,7 +237,7 @@ const SettingsPage: React.FC = () => {
       );
     }
 
-    // Default to text (handling null/undefined safely)
+    
     const safeKeyStr = String(key || '');
     const isSecret = safeKeyStr.includes('password') || safeKeyStr.includes('token');
     return (
@@ -261,7 +261,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-20 max-w-6xl mx-auto">
-      {/* Header & Controls */}
+      {}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 bg-white p-6 rounded-xl border border-slate-200 shadow-sm sticky top-0 z-10">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Advanced Settings</h1>
@@ -307,7 +307,7 @@ const SettingsPage: React.FC = () => {
         </div>
       ) : settings ? (
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Vertical Sidebar Navigation for Groups */}
+          {}
           <div className="w-full lg:w-64 shrink-0">
             <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:sticky lg:top-32">
               {Object.keys(settingGroups).map(group => {
@@ -332,7 +332,7 @@ const SettingsPage: React.FC = () => {
             </nav>
           </div>
 
-          {/* Active Group Settings Form */}
+          {}
           <div className="flex-1 min-w-0">
             {Object.entries(settingGroups).map(([group, keys]) => {
               if (group !== activeTab) return null;

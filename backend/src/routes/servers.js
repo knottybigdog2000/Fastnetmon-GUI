@@ -5,13 +5,13 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// Get all servers
+
 router.get('/', (req, res) => {
   const servers = db.prepare('SELECT id, name, host, api_port, api_login, is_active FROM servers').all();
   res.json(servers);
 });
 
-// Add a server
+
 router.post('/', (req, res) => {
   const { name, host, api_port, api_login, api_password } = req.body;
   const result = db.prepare(
@@ -20,7 +20,7 @@ router.post('/', (req, res) => {
   res.json({ id: result.lastInsertRowid });
 });
 
-// Update a server
+
 router.put('/:id', (req, res) => {
   const { name, host, api_port, api_login, api_password, is_active } = req.body;
   const { id } = req.params;
@@ -37,7 +37,7 @@ router.put('/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Delete a server
+
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM servers WHERE id = ?').run(id);

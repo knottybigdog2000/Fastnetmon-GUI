@@ -25,7 +25,7 @@ const DashboardPage: React.FC = () => {
   const activeServers = useMemo(() => servers?.filter(s => s.is_active) || [], [servers]);
   const primaryServerId = activeServers[0]?.id;
 
-  // 2. Fetch traffic stats (Host Counters)
+  
   const { data: rawHostsData, isLoading: hostsLoading } = useQuery({
     queryKey: ['topHosts', primaryServerId],
     queryFn: async () => {
@@ -41,7 +41,7 @@ const DashboardPage: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  // 2.1 Fetch Global Traffic (From hostgroup_counters_total)
+  
   const { data: rawGlobalData } = useQuery({
     queryKey: ['globalTotal', primaryServerId],
     queryFn: async () => {
@@ -55,7 +55,7 @@ const DashboardPage: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  // 3. Blackholes
+  
   const { data: rawBhData, isLoading: bhLoading } = useQuery({
     queryKey: ['blackholes', primaryServerId],
     queryFn: async () => {
@@ -69,7 +69,7 @@ const DashboardPage: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  // 4. FlowSpec Rules
+  
   const { data: rawFsData, isLoading: fsLoading } = useQuery({
     queryKey: ['flowspecs', primaryServerId],
     queryFn: async () => {
@@ -94,10 +94,10 @@ const DashboardPage: React.FC = () => {
   const processedBans = useMemo(() => extractArray(rawBhData), [rawBhData]);
   const processedFlowSpecs = useMemo(() => extractArray(rawFsData), [rawFsData]);
 
-  // Use the EXACT fields from the API logs provided
+  
   const getBps = (host: any) => {
     if (!host) return 0;
-    // API returns 'incoming_bytes' which is a byte count, convert to bits
+    
     return Number(host.incoming_bytes || 0) * 8;
   };
 
@@ -106,7 +106,7 @@ const DashboardPage: React.FC = () => {
     return Number(host.incoming_packets || 0);
   };
 
-  // Determine Global Totals (Prefer hostgroup_counters_total, fallback to sum)
+  
   const totalBps = useMemo(() => {
     if (rawGlobalData?.values && Array.isArray(rawGlobalData.values) && rawGlobalData.values.length > 0) {
       return getBps(rawGlobalData.values[0]);

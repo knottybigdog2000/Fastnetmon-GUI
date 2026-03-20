@@ -4,7 +4,7 @@ const path = require('path');
 const dbPath = process.env.DB_PATH || path.join(__dirname, '../data.db');
 const db = new Database(dbPath, { verbose: console.log });
 
-// Create tables
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

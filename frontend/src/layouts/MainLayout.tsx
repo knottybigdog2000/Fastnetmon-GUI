@@ -32,7 +32,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-slate-50">
-      {/* Sidebar */}
+      {}
       <aside className="w-64 bg-white border-r border-slate-200">
         <div className="p-6 flex items-center gap-2 font-bold text-xl text-indigo-600">
           <Activity className="w-8 h-8" />
@@ -79,7 +79,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Content */}
+      {}
       <main className="flex-1 overflow-auto p-8">
         {children}
       </main>

@@ -22,7 +22,7 @@ const MitigationPage: React.FC = () => {
   const [ipToBlock, setIpToBlock] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // FlowSpec Form State
+  
   const [flowSpec, setFlowSpec] = useState({
     destination_prefix: '',
     source_prefix: '',
@@ -32,7 +32,7 @@ const MitigationPage: React.FC = () => {
     action_type: 'discard'
   });
 
-  // 1. Fetch Servers
+  
   const { data: servers } = useQuery({
     queryKey: ['servers'],
     queryFn: async () => {
@@ -47,7 +47,7 @@ const MitigationPage: React.FC = () => {
     }
   }, [servers, selectedServerId]);
 
-  // 2. Fetch Active Blackholes
+  
   const { data: blackholes, isLoading: bhLoading } = useQuery({
     queryKey: ['blackholes', selectedServerId],
     queryFn: async () => {
@@ -65,7 +65,7 @@ const MitigationPage: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  // 3. Fetch FlowSpec Rules
+  
   const { data: flowspecs, isLoading: fsLoading } = useQuery({
     queryKey: ['flowspecs', selectedServerId],
     queryFn: async () => {
@@ -83,7 +83,7 @@ const MitigationPage: React.FC = () => {
     refetchInterval: 5000,
   });
 
-  // 4. Mutations
+  
   const blockMutation = useMutation({
     mutationFn: async (ip: string) => {
       return api.post(`/proxy/${selectedServerId}/blackhole`, { value: ip });
@@ -174,7 +174,7 @@ const MitigationPage: React.FC = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Navigation */}
+        {}
         <div className="w-full lg:w-64 shrink-0">
           <nav className="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 lg:sticky lg:top-32">
             <button
@@ -202,7 +202,7 @@ const MitigationPage: React.FC = () => {
           </nav>
         </div>
 
-        {/* Content Area */}
+        {}
         <div className="flex-1 min-w-0 space-y-6">
           {activeTab === 'blackhole' ? (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

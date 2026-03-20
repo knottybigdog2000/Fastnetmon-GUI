@@ -31,7 +31,7 @@ const ServersPage: React.FC = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
 
-  // Form states
+  
   const [formData, setFormData] = useState({
     name: '',
     host: '',

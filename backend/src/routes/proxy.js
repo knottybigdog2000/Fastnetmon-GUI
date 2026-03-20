@@ -6,8 +6,8 @@ const authMiddleware = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-// Proxy request to a specific server using regex to capture serverId and the remaining path
-// This matches /1/some/path and captures "1" and "some/path"
+
+
 router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
   const serverId = req.params[0];
   const targetPath = req.params[1] || '';
@@ -18,7 +18,7 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
     return res.status(404).json({ error: 'Server not found' });
   }
 
-  const baseUrl = `http://${server.host}:${server.api_port}`;
+  const baseUrl = `http:
   const url = `${baseUrl}/${targetPath}`;
 
   console.log(`--- PROXY DEBUG: ${req.method} ${url} ---`);
@@ -40,8 +40,8 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
     });
 
     if (targetPath.includes('host_counters')) {
-      // console.log('--- DEBUG: host_counters raw response ---');
-      // console.log(JSON.stringify(response.data).substring(0, 1000));
+      
+      
     }
     res.status(response.status).json(response.data);
   } catch (error) {

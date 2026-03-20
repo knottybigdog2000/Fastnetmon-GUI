@@ -23,7 +23,7 @@ const UsersPage: React.FC = () => {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  // Fetch Users
+  
   const { data: users, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
@@ -32,7 +32,7 @@ const UsersPage: React.FC = () => {
     },
   });
 
-  // Create User Mutation
+  
   const createMutation = useMutation({
     mutationFn: async (newUser: any) => {
       return api.post('/users', newUser);
@@ -48,7 +48,7 @@ const UsersPage: React.FC = () => {
     }
   });
 
-  // Delete User Mutation
+  
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       return api.delete(`/users/${id}`);
@@ -75,7 +75,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      {/* Header */}
+      {}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">User Management</h1>
@@ -85,7 +85,7 @@ const UsersPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Create User Card */}
+        {}
         <div className="lg:col-span-1 space-y-6">
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="bg-indigo-50/50 border-b border-indigo-100 py-5">
@@ -130,7 +130,7 @@ const UsersPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Users Table */}
+        {}
         <div className="lg:col-span-2">
           <Card className="border-slate-200 shadow-sm h-full flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 py-4 bg-white">

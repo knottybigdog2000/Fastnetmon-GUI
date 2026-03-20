@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const username = 'admin';
-const password = 'password'; // Change this on first login
+const password = 'password'; 
 
 const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
