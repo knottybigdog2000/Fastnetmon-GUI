@@ -16,7 +16,7 @@ import {
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog';
-import { Users, Trash2, UserPlus, Shield } from 'lucide-react';
+import { Trash2, UserPlus, Shield } from 'lucide-react';
 
 interface User {
   id: number;

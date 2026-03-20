@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Activity, ShieldAlert, ArrowUpRight, Zap, ChevronDown } from 'lucide-react';
+import { Activity, ShieldAlert, Zap, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { HostCounter, BlackholeRule, FlowSpecRule, Server } from '@/types/fnm';
 

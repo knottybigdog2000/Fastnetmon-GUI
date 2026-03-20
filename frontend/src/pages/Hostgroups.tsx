@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +21,6 @@ import {
   Edit2, 
   Search, 
   ShieldCheck, 
-  ShieldAlert, 
-  Database,
-  ArrowRight,
   RefreshCw,
   Save
 } from 'lucide-react';
@@ -65,7 +61,7 @@ const HostgroupsPage: React.FC = () => {
   }, [servers, selectedServerId]);
 
   
-  const { data: hostgroups, isLoading, refetch, isFetching } = useQuery({
+  const { data: hostgroups, isLoading } = useQuery({
     queryKey: ['hostgroups', selectedServerId],
     queryFn: async () => {
       if (!selectedServerId) return [];
