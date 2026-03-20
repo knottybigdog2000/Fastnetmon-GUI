@@ -53,5 +53,4 @@ A modern web interface to monitor and manage multiple FastNetMon Advanced instan
 
 ## Next Steps
 - Implement real-time traffic graphs using Recharts.
-- Add mitigation management (Blackhole/Flowspec).
 - Implement hostgroup and network configuration editing.
