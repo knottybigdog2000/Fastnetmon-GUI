@@ -15,9 +15,11 @@ interface Server {
 const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedServerId, setSelectedServerId] = useState<string>('');
+  const [originalSettings, setOriginalSettings] = useState<any>(null);
   const [editState, setEditState] = useState<any>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('Mitigation / Ban');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch servers for the dropdown
   const { data: servers } = useQuery({
@@ -42,6 +44,7 @@ const SettingsPage: React.FC = () => {
       if (!selectedServerId) return null;
       const response = await api.get(`/proxy/${selectedServerId}/main`);
       if (response.data && response.data.object) {
+        setOriginalSettings(response.data.object);
         setEditState(response.data.object);
         return response.data.object;
       }
@@ -50,18 +53,66 @@ const SettingsPage: React.FC = () => {
     enabled: !!selectedServerId,
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (updatedSettings: any) => {
-      return api.put(`/proxy/${selectedServerId}/main`, updatedSettings);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', selectedServerId] });
-      alert("Settings saved successfully.");
-    },
-    onError: (err: any) => {
-      alert(`Failed to save settings: ${err.message}`);
+  const handleSave = async () => {
+    if (!originalSettings || !selectedServerId) return;
+
+    // Find changed keys
+    const changedKeys = Object.keys(editState).filter(
+      key => JSON.stringify(editState[key]) !== JSON.stringify(originalSettings[key])
+    );
+
+    if (changedKeys.length === 0) {
+      alert("No changes detected.");
+      return;
     }
-  });
+
+    setIsSaving(true);
+    let successCount = 0;
+    let failCount = 0;
+    let lastError = "";
+
+    for (const key of changedKeys) {
+      try {
+        let val = editState[key];
+        
+        // FastNetMon path-based API uses enable/disable for booleans
+        if (typeof val === 'boolean') {
+          val = val ? 'enable' : 'disable';
+        }
+        
+        // If it's an array, join it (though usually settings are single values or handled differently)
+        if (Array.isArray(val)) {
+          val = val.join(',');
+        }
+
+        // Format: /proxy/:id/main/:option/:value
+        await api.put(`/proxy/${selectedServerId}/main/${key}/${encodeURIComponent(String(val))}`);
+        successCount++;
+      } catch (err: any) {
+        console.error(`Failed to save ${key}:`, err);
+        failCount++;
+        lastError = err.response?.data?.error_text || err.message;
+      }
+    }
+
+    // MANDATORY: Commit changes for FastNetMon Advanced
+    if (successCount > 0) {
+      try {
+        await api.put(`/proxy/${selectedServerId}/commit`);
+      } catch (commitErr: any) {
+        console.error("Failed to commit changes:", commitErr);
+        lastError = "Changes saved but commit failed. Please check FNM logs.";
+      }
+    }
+
+    setIsSaving(false);
+    if (failCount === 0) {
+      alert(`Successfully updated ${successCount} settings.`);
+      queryClient.invalidateQueries({ queryKey: ['settings', selectedServerId] });
+    } else {
+      alert(`Updated ${successCount} settings, but ${failCount} failed.\nLast error: ${lastError}`);
+    }
+  };
 
   const handleToggleChange = (key: string, checked: boolean) => {
     setEditState((prev: any) => ({ ...prev, [key]: checked }));
@@ -69,10 +120,6 @@ const SettingsPage: React.FC = () => {
 
   const handleInputChange = (key: string, value: string | number | string[]) => {
     setEditState((prev: any) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSave = () => {
-    saveMutation.mutate(editState);
   };
 
   // Group Settings logically
@@ -247,8 +294,9 @@ const SettingsPage: React.FC = () => {
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="h-9 px-3">
             <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
-          <Button onClick={handleSave} disabled={saveMutation.isPending || isLoading} className="h-9 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm w-full sm:w-auto">
-            <Save className="w-4 h-4" /> Save Config
+          <Button onClick={handleSave} disabled={isSaving || isLoading} className="h-9 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm w-full sm:w-auto">
+            {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {isSaving ? 'Saving...' : 'Save Config'}
           </Button>
         </div>
       </div>

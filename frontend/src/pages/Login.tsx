@@ -57,6 +57,8 @@ const LoginPage: React.FC = () => {
                 value={username} 
                 onChange={(e) => setUsername(e.target.value)} 
                 required 
+                autoComplete="off"
+                data-lpignore="true"
               />
             </div>
             <div className="space-y-2">
@@ -67,6 +69,8 @@ const LoginPage: React.FC = () => {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
+                autoComplete="new-password"
+                data-lpignore="true"
               />
             </div>
           </CardContent>
