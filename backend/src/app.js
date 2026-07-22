@@ -13,6 +13,10 @@ const authMiddleware = require('./middleware/auth');
 
 const app = express();
 
+// Behind the frontend nginx container, which sets X-Forwarded-For.
+// Trust exactly one proxy hop so rate limiting sees the real client IP.
+app.set('trust proxy', 1);
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 20,                   
