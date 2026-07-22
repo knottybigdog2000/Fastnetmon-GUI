@@ -20,6 +20,8 @@ the relative `/api` URL with nginx proxying.
 - [x] Input validation on server create/update (400 instead of raw SQLite errors).
 - [x] Removed debug logging of usernames on login and of proxied request bodies.
 - [x] Removed dead code in `proxy.js` and stray `frontend/test.txt`.
+- [x] `trust proxy` enabled so rate limiting sees real client IPs behind the
+      nginx container instead of erroring on `X-Forwarded-For`.
 
 ## High priority
 
