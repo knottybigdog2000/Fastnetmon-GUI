@@ -25,10 +25,10 @@ the relative `/api` URL with nginx proxying.
 
 ## High priority
 
-- [ ] **Password change UI + endpoint.** There is no way to change a password —
-      the only workaround is deleting and recreating the user. Add
-      `PUT /api/users/:id/password` (require current password for self-change)
-      and a form on the Users page.
+- [x] **Password change UI + endpoint.** `PUT /api/users/:id/password` —
+      self-change requires the current password; changing another user is an
+      admin reset. Key icon on the Users page opens the dialog. Minimum
+      password length (8) now also enforced on user creation.
 - [ ] **Real role-based access control.** `role` exists in the DB and JWT but is
       never checked, and the UI offers no role choice — every user is a full
       admin. Add a `viewer` role (read-only: no user/server management, no

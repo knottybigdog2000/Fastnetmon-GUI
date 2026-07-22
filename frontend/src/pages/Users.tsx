@@ -16,7 +16,7 @@ import {
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog';
-import { Trash2, UserPlus, Shield } from 'lucide-react';
+import { Trash2, UserPlus, Shield, KeyRound } from 'lucide-react';
 
 interface User {
   id: number;
@@ -31,6 +31,10 @@ const UsersPage: React.FC = () => {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [pendingDelete, setPendingDelete] = useState<{ id: number; username: string } | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<User | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [changePassword, setChangePassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   
   const { data: users, isLoading } = useQuery({
@@ -70,6 +74,44 @@ const UsersPage: React.FC = () => {
       toast.error(`Failed to delete user: ${err.response?.data?.error || err.message}`);
     }
   });
+
+  const passwordMutation = useMutation({
+    mutationFn: async (data: { id: number; payload: { current_password?: string; new_password: string } }) => {
+      return api.put(`/users/${data.id}/password`, data.payload);
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully.");
+      closePasswordDialog();
+    },
+    onError: (err: any) => {
+      toast.error(`Failed to change password: ${err.response?.data?.error || err.message}`);
+    }
+  });
+
+  const closePasswordDialog = () => {
+    setPasswordTarget(null);
+    setCurrentPassword('');
+    setChangePassword('');
+    setConfirmPassword('');
+  };
+
+  const isSelfChange = passwordTarget?.id === currentUser?.id;
+  const passwordFormValid =
+    changePassword.length >= 8 &&
+    changePassword === confirmPassword &&
+    (!isSelfChange || currentPassword.length > 0);
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordTarget || !passwordFormValid) return;
+    passwordMutation.mutate({
+      id: passwordTarget.id,
+      payload: {
+        new_password: changePassword,
+        ...(isSelfChange ? { current_password: currentPassword } : {}),
+      },
+    });
+  };
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +235,17 @@ const UsersPage: React.FC = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setPasswordTarget(u)}
+                            className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                            title={currentUser?.id === u.id ? "Change your password" : "Reset password"}
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
                             size="icon"
                             onClick={() => handleDeleteUser(u.id, u.username)}
                             disabled={deleteMutation.isPending || currentUser?.id === u.id}
@@ -213,6 +264,72 @@ const UsersPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={!!passwordTarget} onOpenChange={(open) => { if (!open) closePasswordDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5" />
+              {isSelfChange ? 'Change Your Password' : `Reset Password for "${passwordTarget?.username}"`}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4 py-4">
+            {isSelfChange && (
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="dark:bg-slate-900 dark:border-slate-800"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={changePassword}
+                onChange={(e) => setChangePassword(e.target.value)}
+                autoComplete="new-password"
+                className="dark:bg-slate-900 dark:border-slate-800"
+              />
+              {changePassword.length > 0 && changePassword.length < 8 && (
+                <p className="text-xs text-red-500">Must be at least 8 characters</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                className="dark:bg-slate-900 dark:border-slate-800"
+              />
+              {confirmPassword.length > 0 && confirmPassword !== changePassword && (
+                <p className="text-xs text-red-500">Passwords do not match</p>
+              )}
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={closePasswordDialog}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!passwordFormValid || passwordMutation.isPending}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                {passwordMutation.isPending ? 'Saving...' : 'Change Password'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!pendingDelete} onOpenChange={() => setPendingDelete(null)}>
         <DialogContent>
