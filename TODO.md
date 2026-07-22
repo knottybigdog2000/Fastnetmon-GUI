@@ -59,6 +59,9 @@ the relative `/api` URL with nginx proxying.
       login (success and failure), and user/server change is recorded in an
       `audit_log` table (capped at 20k rows) and shown on the new Audit Log
       page, polling every 10s.
+- [x] **Live traffic charts.** Dashboard shows rolling 5-minute area charts of
+      throughput and packet rate for the selected server, built from the
+      existing 5s polling (client-side sample buffer, resets on server switch).
 - [x] **Live server health.** `GET /api/servers/health` probes each active
       FNM instance; the Servers page shows Online + latency, Auth failed, or
       Unreachable per server, refreshing every 15s.

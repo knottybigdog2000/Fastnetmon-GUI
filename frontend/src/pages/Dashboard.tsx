@@ -1,11 +1,21 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Activity, ShieldAlert, Zap, ChevronDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { HostCounter, BlackholeRule, FlowSpecRule, Server } from '@/types/fnm';
+
+interface TrafficSample {
+  time: number;
+  bps: number;
+  pps: number;
+}
+
+// ~5 minutes of history at the 5s poll interval
+const MAX_SAMPLES = 60;
 
 const DashboardPage: React.FC = () => {
   const { data: servers, isLoading: serversLoading } = useQuery({
@@ -138,6 +148,85 @@ const DashboardPage: React.FC = () => {
     return `${pps} pps`;
   };
 
+  // Accumulate a rolling window of samples for the traffic charts
+  const [samples, setSamples] = useState<TrafficSample[]>([]);
+  const lastSampleKey = useRef<unknown>(null);
+
+  useEffect(() => {
+    setSamples([]);
+    lastSampleKey.current = null;
+  }, [primaryServerId]);
+
+  useEffect(() => {
+    if (rawHostsData === undefined && rawGlobalData === undefined) return;
+    // Only record when a fresh poll arrives, not on unrelated re-renders
+    const key = rawGlobalData ?? rawHostsData;
+    if (key === lastSampleKey.current) return;
+    lastSampleKey.current = key;
+    setSamples(prev =>
+      [...prev, { time: Date.now(), bps: totalBps, pps: totalPps }].slice(-MAX_SAMPLES)
+    );
+  }, [rawHostsData, rawGlobalData, totalBps, totalPps]);
+
+  const formatClock = (t: number) =>
+    new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const chartAxisProps = {
+    tick: { fill: '#94a3b8', fontSize: 11 },
+    tickLine: false,
+    axisLine: false,
+  } as const;
+
+  const renderTrafficChart = (
+    dataKey: 'bps' | 'pps',
+    formatter: (v: number) => string,
+  ) => (
+    <ResponsiveContainer width="100%" height={220}>
+      <AreaChart data={samples} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+        <defs>
+          <linearGradient id={`fill-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.15} vertical={false} />
+        <XAxis
+          dataKey="time"
+          tickFormatter={formatClock}
+          minTickGap={60}
+          {...chartAxisProps}
+        />
+        <YAxis
+          tickFormatter={(v: number) => formatter(v).replace(/(\.\d)\d+/, '$1')}
+          width={70}
+          domain={[0, 'auto']}
+          {...chartAxisProps}
+        />
+        <Tooltip
+          labelFormatter={(t) => formatClock(Number(t))}
+          formatter={(value) => [formatter(Number(value)), dataKey === 'bps' ? 'Throughput' : 'Packet rate']}
+          contentStyle={{
+            backgroundColor: 'rgb(15 23 42 / 0.92)',
+            border: '1px solid rgb(51 65 85)',
+            borderRadius: '8px',
+            color: '#e2e8f0',
+            fontSize: '12px',
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey={dataKey}
+          stroke="#6366f1"
+          strokeWidth={2}
+          fill={`url(#fill-${dataKey})`}
+          isAnimationActive={false}
+          dot={false}
+          activeDot={{ r: 4, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+
   if (serversLoading) return <div className="p-8 text-center">Loading Dashboard...</div>;
 
   if (activeServers.length === 0) {
@@ -222,6 +311,38 @@ const DashboardPage: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{processedFlowSpecs.length}</div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Layer 7/Filtering</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Throughput — last 5 minutes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {samples.length < 2 ? (
+              <div className="h-[220px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+                Collecting samples…
+              </div>
+            ) : (
+              renderTrafficChart('bps', formatBps)
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">Packet Rate — last 5 minutes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {samples.length < 2 ? (
+              <div className="h-[220px] flex items-center justify-center text-sm text-slate-400 dark:text-slate-500">
+                Collecting samples…
+              </div>
+            ) : (
+              renderTrafficChart('pps', formatPps)
+            )}
           </CardContent>
         </Card>
       </div>
