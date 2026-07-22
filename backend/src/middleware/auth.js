@@ -6,7 +6,9 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) {
-        return res.status(403).json({ error: 'Forbidden' });
+        // 401: the token is bad/expired — the client should re-login.
+        // 403 is reserved for valid sessions lacking permission.
+        return res.status(401).json({ error: 'Unauthorized' });
       }
       req.user = user;
       next();

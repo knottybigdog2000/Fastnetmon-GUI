@@ -3,9 +3,12 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 const audit = require('../lib/audit');
+const requireAdmin = require('../middleware/requireAdmin');
+
+const VALID_ROLES = ['admin', 'viewer'];
 
 
-router.get('/', (req, res) => {
+router.get('/', requireAdmin, (req, res) => {
   try {
     const users = db.prepare('SELECT id, username, role FROM users').all();
     res.json(users);
@@ -17,13 +20,16 @@ router.get('/', (req, res) => {
 
 const MIN_PASSWORD_LENGTH = 8;
 
-router.post('/', (req, res) => {
+router.post('/', requireAdmin, (req, res) => {
   const { username, password, role } = req.body;
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
   }
   if (password.length < MIN_PASSWORD_LENGTH) {
     return res.status(400).json({ error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` });
+  }
+  if (role && !VALID_ROLES.includes(role)) {
+    return res.status(400).json({ error: `Role must be one of: ${VALID_ROLES.join(', ')}` });
   }
 
   try {
@@ -58,6 +64,11 @@ router.put('/:id/password', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  // Anyone may change their own password; resetting someone else's requires admin
+  if (id !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
   // Changing your own password requires proving you know the current one;
   // changing another user's is an admin reset.
   if (id === req.user.id) {
@@ -79,7 +90,7 @@ router.put('/:id/password', (req, res) => {
 });
 
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireAdmin, (req, res) => {
   const id = req.params.id;
   
   

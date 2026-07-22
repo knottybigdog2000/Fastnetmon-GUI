@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ import { Hostgroup, Server } from '@/types/fnm';
 
 const HostgroupsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
   const [selectedServerId, setSelectedServerId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -151,26 +153,30 @@ const HostgroupsPage: React.FC = () => {
             ))}
           </select>
           
-          <Button 
-            onClick={handleCommit} 
-            disabled={isCommitting || !selectedServerId}
-            variant="outline"
-            className="border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-          >
-            {isCommitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-            Commit Changes
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                onClick={handleCommit}
+                disabled={isCommitting || !selectedServerId}
+                variant="outline"
+                className="border-orange-200 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              >
+                {isCommitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Commit Changes
+              </Button>
 
-          <Button 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
-            onClick={() => {
-              setEditingServer(null);
-              resetForm();
-              setIsDialogOpen(true);
-            }}
-          >
-            <Plus className="w-4 h-4" /> New Group
-          </Button>
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+                onClick={() => {
+                  setEditingServer(null);
+                  resetForm();
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="w-4 h-4" /> New Group
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -204,14 +210,16 @@ const HostgroupsPage: React.FC = () => {
                         {hg.calculation_method.replace('_', ' ')}
                       </Badge>
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600" onClick={() => handleEditOpen(hg)}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => setPendingDelete(hg)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-indigo-600" onClick={() => handleEditOpen(hg)}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={() => setPendingDelete(hg)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-4">

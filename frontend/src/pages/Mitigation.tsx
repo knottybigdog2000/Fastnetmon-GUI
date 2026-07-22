@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +20,7 @@ import {
 import { BlackholeRule, FlowSpecRule, Server } from '@/types/fnm';
 
 const MitigationPage: React.FC = () => {
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'blackhole' | 'flowspec'>('blackhole');
   const [selectedServerId, setSelectedServerId] = useState<string>('');
@@ -222,6 +224,7 @@ const MitigationPage: React.FC = () => {
         <div className="flex-1 min-w-0 space-y-6">
           {activeTab === 'blackhole' ? (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {isAdmin && (
               <Card className="xl:col-span-1 h-fit border-slate-200 dark:border-slate-800 shadow-sm">
                 <CardHeader className="bg-red-50/50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30">
                   <CardTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
@@ -252,8 +255,9 @@ const MitigationPage: React.FC = () => {
                   </Button>
                 </CardContent>
               </Card>
+              )}
 
-              <Card className="xl:col-span-2 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <Card className={`${isAdmin ? 'xl:col-span-2' : 'xl:col-span-3'} border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden`}>
                 <CardHeader className="bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                   <CardTitle>Active BGP Bans</CardTitle>
                 </CardHeader>
@@ -273,9 +277,11 @@ const MitigationPage: React.FC = () => {
                           <TableCell className="font-mono font-medium text-slate-900 dark:text-slate-100">{bh.ip}</TableCell>
                           <TableCell><Badge variant="destructive" className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border-0">Blocked</Badge></TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-600 dark:hover:text-red-400" onClick={() => setPendingDelete({ type: 'blackhole', uuid: bh.uuid, label: bh.ip })}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {isAdmin && (
+                              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-600 dark:hover:text-red-400" onClick={() => setPendingDelete({ type: 'blackhole', uuid: bh.uuid, label: bh.ip })}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -286,6 +292,7 @@ const MitigationPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {isAdmin && (
               <Card className="xl:col-span-1 h-fit border-slate-200 dark:border-slate-800 shadow-sm">
                 <CardHeader className="bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-indigo-100 dark:border-indigo-900/30">
                   <CardTitle className="text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
@@ -323,8 +330,9 @@ const MitigationPage: React.FC = () => {
                   </Button>
                 </CardContent>
               </Card>
+              )}
 
-              <Card className="xl:col-span-2 border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <Card className={`${isAdmin ? 'xl:col-span-2' : 'xl:col-span-3'} border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden`}>
                 <CardHeader className="bg-slate-50/80 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                   <CardTitle>Active FlowSpec Rules</CardTitle>
                 </CardHeader>
@@ -346,9 +354,11 @@ const MitigationPage: React.FC = () => {
                           <TableCell><Badge variant="outline" className="font-normal">{fs.protocols?.join(',')}</Badge></TableCell>
                           <TableCell className="text-xs text-slate-500 dark:text-slate-400">{fs.source_ports?.join(',') || '*'}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-600 dark:hover:text-red-400" onClick={() => setPendingDelete({ type: 'flowspec', uuid: fs.uuid, label: fs.destination_prefix })}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {isAdmin && (
+                              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-600 dark:hover:text-red-400" onClick={() => setPendingDelete({ type: 'flowspec', uuid: fs.uuid, label: fs.destination_prefix })}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))

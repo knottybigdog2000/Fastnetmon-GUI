@@ -29,10 +29,13 @@ the relative `/api` URL with nginx proxying.
       self-change requires the current password; changing another user is an
       admin reset. Key icon on the Users page opens the dialog. Minimum
       password length (8) now also enforced on user creation.
-- [ ] **Real role-based access control.** `role` exists in the DB and JWT but is
-      never checked, and the UI offers no role choice — every user is a full
-      admin. Add a `viewer` role (read-only: no user/server management, no
-      mitigation actions) and enforce it in backend middleware, not just the UI.
+- [x] **Real role-based access control.** `viewer` role added: read-only
+      access enforced in backend middleware (proxy mutations, server and user
+      management all require admin; viewers keep dashboards, rule views, audit
+      log, and self password change). Role picker on user creation; Users and
+      Settings pages hidden from viewers; auth middleware now returns 401 only
+      for dead sessions and 403 for permission denials. Note: a role change
+      takes effect at the user's next login (role lives in the JWT).
 - [ ] **HTTPS to FastNetMon instances.** The proxy hardcodes `http://`; FNM API
       credentials transit the network in clear. Add a per-server `use_tls` flag
       (and a "skip TLS verify" escape hatch for self-signed certs).
@@ -45,8 +48,7 @@ the relative `/api` URL with nginx proxying.
 - [ ] **Restrict the proxy.** `/api/proxy/:id/*` forwards any path/method to the
       FNM API. An allowlist of known FNM endpoints would shrink the blast radius
       of a stolen token.
-- [ ] **Respect `is_active` in the proxy** — inactive servers can still be
-      queried directly by ID.
+- [x] **Respect `is_active` in the proxy** — inactive servers now return 400.
 - [ ] **Backend tests.** `npm test` is a placeholder. Start with supertest
       coverage of auth, servers CRUD (encryption round-trip), and proxy error
       paths — the seed/encrypt fixes above had no safety net.

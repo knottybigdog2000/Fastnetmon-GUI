@@ -13,12 +13,13 @@ import UsersPage from '@/pages/Users';
 import HostgroupsPage from '@/pages/Hostgroups';
 import AuditLogPage from '@/pages/AuditLog';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, loading } = useAuth();
-  
+const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ children, adminOnly }) => {
+  const { token, loading, isAdmin } = useAuth();
+
   if (loading) return <div>Loading...</div>;
   if (!token) return <Navigate to="/login" replace />;
-  
+  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+
   return <MainLayout>{children}</MainLayout>;
 };
 
@@ -36,10 +37,10 @@ const App: React.FC = () => {
               <Route path="/servers" element={<ProtectedRoute><ServersPage /></ProtectedRoute>} />
               <Route path="/mitigation" element={<ProtectedRoute><MitigationPage /></ProtectedRoute>} />
               <Route path="/hostgroups" element={<ProtectedRoute><HostgroupsPage /></ProtectedRoute>} />
-              <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute adminOnly><UsersPage /></ProtectedRoute>} />
               <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
 
-              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute adminOnly><SettingsPage /></ProtectedRoute>} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>

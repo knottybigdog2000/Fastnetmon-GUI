@@ -12,6 +12,7 @@ interface AuthContextType {
   login: (token: string, user: User) => void;
   logout: () => void;
   loading: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,8 +46,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
   };
 
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

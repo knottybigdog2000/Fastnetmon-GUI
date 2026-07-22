@@ -5,8 +5,15 @@ const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const { decrypt } = require('../lib/encrypt');
 const audit = require('../lib/audit');
+const requireAdmin = require('../middleware/requireAdmin');
 
 router.use(authMiddleware);
+
+// Reads are open to all authenticated users; mutations require admin
+router.use((req, res, next) => {
+  if (req.method === 'GET') return next();
+  requireAdmin(req, res, next);
+});
 
 
 
@@ -18,6 +25,9 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
   const server = db.prepare('SELECT * FROM servers WHERE id = ?').get(serverId);
   if (!server) {
     return res.status(404).json({ error: 'Server not found' });
+  }
+  if (!server.is_active) {
+    return res.status(400).json({ error: 'Server is inactive' });
   }
 
   const baseUrl = `http://${server.host}:${server.api_port}`;

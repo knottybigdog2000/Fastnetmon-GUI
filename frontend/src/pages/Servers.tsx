@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/api';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +21,7 @@ import { Server } from '@/types/fnm';
 
 const ServersPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<Server | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Server | null>(null);
@@ -143,16 +145,18 @@ const ServersPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">FNM Instances</h1>
           <p className="text-slate-500 dark:text-slate-400">Manage your FastNetMon Advanced servers</p>
         </div>
-        <Button 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
-          onClick={() => {
-            setEditingServer(null);
-            resetForm();
-            setIsDialogOpen(true);
-          }}
-        >
-          <Plus className="w-4 h-4" /> Add Server
-        </Button>
+        {isAdmin && (
+          <Button
+            className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2"
+            onClick={() => {
+              setEditingServer(null);
+              resetForm();
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="w-4 h-4" /> Add Server
+          </Button>
+        )}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -282,17 +286,23 @@ const ServersPage: React.FC = () => {
                     <TableCell>{server.api_port}</TableCell>
                     <TableCell>{server.api_login}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400" onClick={() => handleEditOpen(server)}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
-                        onClick={() => setPendingDelete(server)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {isAdmin ? (
+                        <>
+                          <Button variant="ghost" size="icon" className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400" onClick={() => handleEditOpen(server)}>
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
+                            onClick={() => setPendingDelete(server)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

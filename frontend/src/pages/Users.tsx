@@ -30,6 +30,7 @@ const UsersPage: React.FC = () => {
   
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState<'admin' | 'viewer'>('admin');
   const [pendingDelete, setPendingDelete] = useState<{ id: number; username: string } | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<User | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -54,6 +55,7 @@ const UsersPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setNewUsername('');
       setNewPassword('');
+      setNewRole('admin');
       toast.success("User created successfully.");
     },
     onError: (err: any) => {
@@ -116,7 +118,7 @@ const UsersPage: React.FC = () => {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUsername.trim() || !newPassword.trim()) return;
-    createMutation.mutate({ username: newUsername.trim(), password: newPassword });
+    createMutation.mutate({ username: newUsername.trim(), password: newPassword, role: newRole });
   };
 
   const handleDeleteUser = (id: number, username: string) => {
@@ -174,8 +176,20 @@ const UsersPage: React.FC = () => {
                     className="dark:bg-slate-900 dark:border-slate-800"
                   />
                 </div>
-                <Button 
-                  type="submit" 
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <select
+                    id="role"
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as 'admin' | 'viewer')}
+                    className="flex h-9 w-full items-center rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-200"
+                  >
+                    <option value="admin">Admin — full access</option>
+                    <option value="viewer">Viewer — read-only</option>
+                  </select>
+                </div>
+                <Button
+                  type="submit"
                   disabled={!newUsername.trim() || !newPassword.trim() || createMutation.isPending}
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm mt-2"
                 >

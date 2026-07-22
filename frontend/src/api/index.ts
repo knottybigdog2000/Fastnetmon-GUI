@@ -15,7 +15,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    // Only 401 means the session is dead; 403 is a permission denial for this action
+    if (error.response && error.response.status === 401) {
       
       localStorage.removeItem('token');
       localStorage.removeItem('user');

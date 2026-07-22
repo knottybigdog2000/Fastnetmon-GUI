@@ -5,6 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const axios = require('axios');
 const { encrypt, decrypt } = require('../lib/encrypt');
 const audit = require('../lib/audit');
+const requireAdmin = require('../middleware/requireAdmin');
 
 router.use(authMiddleware);
 
@@ -52,7 +53,7 @@ router.get('/health', async (req, res) => {
 });
 
 
-router.post('/', (req, res) => {
+router.post('/', requireAdmin, (req, res) => {
   const { name, host, api_port, api_login, api_password } = req.body;
   if (!name || !host || !api_login || !api_password) {
     return res.status(400).json({ error: 'name, host, api_login and api_password are required' });
@@ -66,7 +67,7 @@ router.post('/', (req, res) => {
 });
 
 
-router.put('/:id', (req, res) => {
+router.put('/:id', requireAdmin, (req, res) => {
   const { name, host, api_port, api_login, api_password, is_active } = req.body;
   const { id } = req.params;
   if (!name || !host || !api_login) {
@@ -94,7 +95,7 @@ router.put('/:id', (req, res) => {
 });
 
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', requireAdmin, (req, res) => {
   const { id } = req.params;
   const target = db.prepare('SELECT name, host FROM servers WHERE id = ?').get(id);
   db.prepare('DELETE FROM servers WHERE id = ?').run(id);
