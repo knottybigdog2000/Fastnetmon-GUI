@@ -4,6 +4,7 @@ const axios = require('axios');
 const db = require('../db');
 const authMiddleware = require('../middleware/auth');
 const { decrypt } = require('../lib/encrypt');
+const audit = require('../lib/audit');
 
 router.use(authMiddleware);
 
@@ -30,6 +31,12 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
     return res.status(500).json({ error: e.message });
   }
 
+  // Mutations against FNM are the operationally sensitive actions — audit them
+  const logMutation = (success, note) => {
+    if (req.method === 'GET') return;
+    audit(req, `fnm:${req.method.toLowerCase()}`, `${server.name}: /${targetPath}${note ? ` (${note})` : ''}`, success);
+  };
+
   try {
     const response = await axios({
       method: req.method,
@@ -43,13 +50,16 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
       timeout: 5000
     });
 
+    logMutation(true);
     res.status(response.status).json(response.data);
   } catch (error) {
     if (error.response) {
       console.error(`FastNetMon API Error (${error.response.status}):`, JSON.stringify(error.response.data));
+      logMutation(false, `HTTP ${error.response.status}`);
       res.status(error.response.status).json(error.response.data);
     } else {
       console.error(`Proxy Connection Error for server ${serverId}:`, error.message);
+      logMutation(false, error.message);
       res.status(500).json({ error: 'Failed to reach FastNetMon API', message: error.message });
     }
   }

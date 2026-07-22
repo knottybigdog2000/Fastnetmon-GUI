@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const serverRoutes = require('./routes/servers');
 const proxyRoutes = require('./routes/proxy');
 const usersRoutes = require('./routes/users');
+const auditRoutes = require('./routes/audit');
 const authMiddleware = require('./middleware/auth');
 
 const app = express();
@@ -64,6 +65,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/servers', serverRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/users', authMiddleware, usersRoutes);
+app.use('/api/audit', auditRoutes);
 
 
 app.use((err, req, res, next) => {

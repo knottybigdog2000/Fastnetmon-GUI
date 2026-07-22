@@ -11,6 +11,7 @@ import SettingsPage from '@/pages/Settings';
 import MitigationPage from '@/pages/Mitigation';
 import UsersPage from '@/pages/Users';
 import HostgroupsPage from '@/pages/Hostgroups';
+import AuditLogPage from '@/pages/AuditLog';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useAuth();
@@ -36,6 +37,7 @@ const App: React.FC = () => {
               <Route path="/mitigation" element={<ProtectedRoute><MitigationPage /></ProtectedRoute>} />
               <Route path="/hostgroups" element={<ProtectedRoute><HostgroupsPage /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+              <Route path="/audit" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
 
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             </Routes>

@@ -53,11 +53,15 @@ the relative `/api` URL with nginx proxying.
 
 ## Low / polish
 
+- [x] **Audit log.** Every mitigation action through the proxy (non-GET),
+      login (success and failure), and user/server change is recorded in an
+      `audit_log` table (capped at 20k rows) and shown on the new Audit Log
+      page, polling every 10s.
+- [x] **Live server health.** `GET /api/servers/health` probes each active
+      FNM instance; the Servers page shows Online + latency, Auth failed, or
+      Unreachable per server, refreshing every 15s.
 - [ ] IPv6 support in the Mitigation page validator (`isValidIpOrCidr` is
       IPv4-only; FNM supports IPv6 blackholes).
-- [ ] Audit log of mitigation actions (who blackholed/unblocked what, when).
 - [ ] CI (GitHub Actions): lint + `tsc` + backend tests on PR.
-- [ ] Health/status indicator per server on the Servers page (ping the FNM API
-      instead of only showing the manual active flag).
 - [ ] Delete `FNM-GUI-Fix-TodoList.docx` once this file is the agreed source of
       truth.

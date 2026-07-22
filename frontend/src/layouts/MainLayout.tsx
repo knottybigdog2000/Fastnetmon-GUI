@@ -8,7 +8,8 @@ import {
   Settings, 
   Users,
   LogOut,
-  Activity
+  Activity,
+  ScrollText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -29,6 +30,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { name: 'Mitigation', path: '/mitigation', icon: ShieldAlert },
     { name: 'Hostgroups', path: '/hostgroups', icon: Users },
     { name: 'Users', path: '/users', icon: Settings },
+    { name: 'Audit Log', path: '/audit', icon: ScrollText },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 

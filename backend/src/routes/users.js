@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../db');
+const audit = require('../lib/audit');
 
 
 router.get('/', (req, res) => {
@@ -33,6 +34,7 @@ router.post('/', (req, res) => {
       role || 'admin' 
     );
     
+    audit(req, 'user:create', `Created user "${username}"`);
     res.json({ id: result.lastInsertRowid, username, role: role || 'admin' });
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
@@ -70,6 +72,9 @@ router.put('/:id/password', (req, res) => {
 
   const hashedPassword = bcrypt.hashSync(new_password, 10);
   db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, id);
+  audit(req, 'user:password', id === req.user.id
+    ? 'Changed own password'
+    : `Reset password for "${target.username}"`);
   res.json({ success: true });
 });
 
@@ -83,10 +88,12 @@ router.delete('/:id', (req, res) => {
   }
 
   try {
+    const target = db.prepare('SELECT username FROM users WHERE id = ?').get(id);
     const result = db.prepare('DELETE FROM users WHERE id = ?').run(id);
     if (result.changes === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
+    audit(req, 'user:delete', `Deleted user "${target.username}"`);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

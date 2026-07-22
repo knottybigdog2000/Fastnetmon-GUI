@@ -41,6 +41,28 @@ const ServersPage: React.FC = () => {
     },
   });
 
+  interface ServerHealth {
+    id: number;
+    ok: boolean;
+    latency_ms?: number;
+    error?: string;
+  }
+
+  const { data: health } = useQuery({
+    queryKey: ['serversHealth'],
+    queryFn: async () => {
+      const response = await api.get('/servers/health');
+      return response.data as ServerHealth[];
+    },
+    refetchInterval: 15000,
+  });
+
+  const healthById = React.useMemo(() => {
+    const map = new Map<number, ServerHealth>();
+    health?.forEach(h => map.set(h.id, h));
+    return map;
+  }, [health]);
+
   const addMutation = useMutation({
     mutationFn: (newServer: any) => api.post('/servers', newServer),
     onSuccess: () => {
@@ -206,6 +228,7 @@ const ServersPage: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Status</TableHead>
+                <TableHead>Health</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Host</TableHead>
                 <TableHead>Port</TableHead>
@@ -216,7 +239,7 @@ const ServersPage: React.FC = () => {
             <TableBody>
               {servers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-slate-500 dark:text-slate-400">
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-500 dark:text-slate-400">
                     No servers added yet.
                   </TableCell>
                 </TableRow>
@@ -233,6 +256,26 @@ const ServersPage: React.FC = () => {
                           <XCircle className="w-3 h-3" /> Inactive
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {!server.is_active ? (
+                        <span className="text-sm text-slate-400 dark:text-slate-500">—</span>
+                      ) : (() => {
+                        const h = healthById.get(server.id);
+                        if (!h) return <span className="text-sm text-slate-400 dark:text-slate-500">checking…</span>;
+                        if (h.ok) return (
+                          <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            Online · {h.latency_ms}ms
+                          </span>
+                        );
+                        return (
+                          <span className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400" title={h.error}>
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            {h.error === 'auth failed' ? 'Auth failed' : h.error === 'credential error' ? 'Credential error' : 'Unreachable'}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="font-medium">{server.name}</TableCell>
                     <TableCell>{server.host}</TableCell>
