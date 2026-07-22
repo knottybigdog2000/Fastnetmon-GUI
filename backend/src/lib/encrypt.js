@@ -16,18 +16,21 @@ function encrypt(text) {
   return `${iv.toString('hex')}:${tag.toString('hex')}:${enc.toString('hex')}`;
 }
 
+// iv:tag:data, all hex — anything else is a legacy plaintext value
+const ENCRYPTED_FORMAT = /^[0-9a-f]{24}:[0-9a-f]{32}:[0-9a-f]*$/i;
+
 function decrypt(stored) {
-  if (!stored || !stored.includes(':')) return stored; 
+  if (!stored || !ENCRYPTED_FORMAT.test(stored)) return stored;
+  const [ivHex, tagHex, dataHex] = stored.split(':');
+  const iv   = Buffer.from(ivHex, 'hex');
+  const tag  = Buffer.from(tagHex, 'hex');
+  const data = Buffer.from(dataHex, 'hex');
   try {
-    const [ivHex, tagHex, dataHex] = stored.split(':');
-    const iv   = Buffer.from(ivHex, 'hex');
-    const tag  = Buffer.from(tagHex, 'hex');
-    const data = Buffer.from(dataHex, 'hex');
     const decipher = crypto.createDecipheriv(ALGO, KEY, iv);
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
   } catch (e) {
-    return stored; 
+    throw new Error('Failed to decrypt stored credentials — has ENCRYPTION_KEY changed?');
   }
 }
 

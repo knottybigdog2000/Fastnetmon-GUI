@@ -22,9 +22,12 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
   const baseUrl = `http://${server.host}:${server.api_port}`;
   const url = `${baseUrl}/${targetPath}`;
 
-  console.log(`--- PROXY DEBUG: ${req.method} ${url} ---`);
-  if (req.method !== 'GET') {
-    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+  let apiPassword;
+  try {
+    apiPassword = decrypt(server.api_password);
+  } catch (e) {
+    console.error(`Credential error for server ${serverId}:`, e.message);
+    return res.status(500).json({ error: e.message });
   }
 
   try {
@@ -35,15 +38,11 @@ router.all(/^\/(\d+)\/?(.*)/, async (req, res) => {
       data: req.body,
       auth: {
         username: server.api_login,
-        password: decrypt(server.api_password)
+        password: apiPassword
       },
       timeout: 5000
     });
 
-    if (targetPath.includes('host_counters')) {
-      
-      
-    }
     res.status(response.status).json(response.data);
   } catch (error) {
     if (error.response) {

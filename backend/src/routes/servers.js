@@ -15,6 +15,9 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const { name, host, api_port, api_login, api_password } = req.body;
+  if (!name || !host || !api_login || !api_password) {
+    return res.status(400).json({ error: 'name, host, api_login and api_password are required' });
+  }
   const encryptedPassword = encrypt(api_password);
   const result = db.prepare(
     'INSERT INTO servers (name, host, api_port, api_login, api_password) VALUES (?, ?, ?, ?, ?)'
@@ -26,16 +29,25 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   const { name, host, api_port, api_login, api_password, is_active } = req.body;
   const { id } = req.params;
-  
+  if (!name || !host || !api_login) {
+    return res.status(400).json({ error: 'name, host and api_login are required' });
+  }
+
+  const existing = db.prepare('SELECT * FROM servers WHERE id = ?').get(id);
+  if (!existing) {
+    return res.status(404).json({ error: 'Server not found' });
+  }
+  const active = is_active === undefined ? existing.is_active : (is_active ? 1 : 0);
+
   if (api_password) {
     const encryptedPassword = encrypt(api_password);
     db.prepare(
       'UPDATE servers SET name = ?, host = ?, api_port = ?, api_login = ?, api_password = ?, is_active = ? WHERE id = ?'
-    ).run(name, host, api_port, api_login, encryptedPassword, is_active, id);
+    ).run(name, host, api_port || 10007, api_login, encryptedPassword, active, id);
   } else {
     db.prepare(
       'UPDATE servers SET name = ?, host = ?, api_port = ?, api_login = ?, is_active = ? WHERE id = ?'
-    ).run(name, host, api_port, api_login, is_active, id);
+    ).run(name, host, api_port || 10007, api_login, active, id);
   }
   res.json({ success: true });
 });

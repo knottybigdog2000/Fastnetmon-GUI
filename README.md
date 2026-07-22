@@ -52,7 +52,7 @@ The fastest way to get the GUI running is using Docker Compose.
 4. **Access the GUI**:
    Open your browser to `http://localhost:8080`.
    - **Default Username**: `admin`
-   - **Default Password**: `password` (Please change this immediately in User Management!)
+   - **Default Password**: set `ADMIN_PASSWORD` in `.env` before first launch, or a random password is generated and printed once in the backend logs (`docker logs fnm-gui-backend`).
 
 ## 🔧 Manual Development Setup
 
